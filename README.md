@@ -58,7 +58,24 @@ uv run python -m analysis.outliers --window since_2026-06-15
 uv run python -m analysis.repeatability
 # 4. push repeatable ideas to Airtable                -> reports/<run_id>/airtable_sync.md
 uv run python -m integrations.airtable.push --dry-run   # then without --dry-run
+# 5. hand the top idea to the video sub-agent          -> ../idea-video-agent/briefs/<run_id>__<id>.md
+uv run python -m analysis.handoff            # add --launch to build the short headlessly
 ```
+
+## The video sub-agent
+
+Step 5 hands one idea to **[idea-video-agent](../idea-video-agent/)**, a separate Claude Code project
+in a sibling folder. Separate on purpose: it starts with fresh context, its own `CLAUDE.md`, skill,
+hooks, and permissions, and the only thing it receives is the brief file. It turns the brief into a
+9:16 short with HyperFrames (`/hyperframes` → `motion-graphics` for a 10s kinetic piece, or `faceless-explainer` for a narrated 30-90s explainer; set in `pipeline.toml` [video]) and writes
+`output/<brief-id>/video.mp4` plus a `SUMMARY.md` that carries the `run_id`, so the video traces back
+to the report, the Airtable row, and the log that produced it.
+
+Voice and music are optional (`[video] voice` / `music` in `pipeline.toml`). With `elevenlabs`, the agent's own `.env` must hold `ELEVENLABS_API_KEY`; voice uses the media engine's ElevenLabs route and music is generated with the agent's `scripts/elevenlabs_music.sh`.
+
+Launch it headlessly with `scripts/run_video_agent.sh <brief-file>`, or open Claude Code in that
+folder and say "New brief: briefs/<file>.md". Trust the folder once (interactive session) before the
+first headless run, or its permission allowlist is ignored.
 
 Change a rule by editing [pipeline.toml](pipeline.toml); override it for one run with the matching flag (e.g. `--threshold 4`). Full details in [.claude/skills/pipeline/SKILL.md](.claude/skills/pipeline/SKILL.md).
 
@@ -77,3 +94,11 @@ The logger redacts secrets before writing: every value from `.env`, any environm
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+To see what the video sub-agent is doing right now, in plain words:
+
+```bash
+scripts/video_agent_status.sh        # one snapshot: running?, stage, last actions
+scripts/video_agent_status.sh -f     # refresh every 10 seconds
+tail -f ../idea-video-agent/logs/latest.log   # every tool call, live
+```

@@ -22,6 +22,9 @@ DEFAULTS: dict[str, dict] = {
     "outliers": {"threshold": 3.0, "min_age_days": 7, "format": "long"},
     "repeatability": {"days_back": 180, "per_query": 25, "min_similarity": 0.4, "min_views": 10_000, "min_channels": 3, "limit": 0},
     "airtable": {"table": "Repeatable Ideas", "push_all": False},
+    "video": {"agent_dir": "../idea-video-agent", "pick": "top", "workflow": "faceless-explainer", "destination": "shorts",
+              "aspect": "1080x1920", "length": "30s", "language": "en", "angle": "auto",
+              "voice": "elevenlabs", "voice_id": "", "music": "elevenlabs", "music_mood": "auto"},
 }
 
 

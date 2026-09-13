@@ -27,3 +27,19 @@ limit = 0                 # only check the top N outliers by multiple (0 = check
 [airtable]                # step 4 · uv run python -m integrations.airtable.push
 table = "Repeatable Ideas"
 push_all = false          # true = also push the ideas that were NOT repeatable (with Repeatable unchecked)
+
+[video]                   # step 5 · uv run python -m analysis.handoff
+# The sub-agent is a SEPARATE Claude Code project (sibling folder, so it does not inherit this
+# project's CLAUDE.md). It receives one brief per idea and nothing else.
+agent_dir = "../idea-video-agent"
+pick = "top"              # which repeatable idea to hand off by default: "top" (highest repeatability score) or a video ID
+workflow = "faceless-explainer"   # motion-graphics = short unnarrated kinetic piece (<=10s, fast) · faceless-explainer = 30-90s narrated explainer (slower)
+destination = "shorts"    # shorts | tiktok | reels | youtube  (shorts/tiktok/reels = 9:16)
+aspect = "1080x1920"
+length = "30s"
+language = "en"
+angle = "auto"            # auto (from the title shape) | listicle | how-to | concept | narrative  (used by faceless-explainer)
+voice = "elevenlabs"      # none | elevenlabs (needs ELEVENLABS_API_KEY in the agent's .env) | default (HeyGen/Kokoro per the media engine)
+voice_id = "SAz9YHcvj6GT2YYXdXww"   # ElevenLabs voice: River (relaxed, neutral, informative). "" = provider default
+music = "elevenlabs"      # none | elevenlabs (generated bed via the agent's scripts/elevenlabs_music.sh) | default (media engine)
+music_mood = "auto"       # auto (from the idea) or a mood prompt, e.g. "warm lo-fi, curious, light percussion"
