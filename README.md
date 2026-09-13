@@ -45,6 +45,8 @@ Each integration is a small Python client plus a CLI, a Claude skill under `.cla
 
 ## Demo video
 
+[![Watch the 2-minute demo](https://img.youtube.com/vi/D6rgPAVBh3w/maxresdefault.jpg)](https://youtu.be/D6rgPAVBh3w)
+
 https://youtu.be/D6rgPAVBh3w
 
 ## License
