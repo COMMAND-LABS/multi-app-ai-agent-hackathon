@@ -71,6 +71,8 @@ uv run python -m analysis.evaluate
 uv run python -m analysis.pipeline [--skip video] [--dry-run]
 ```
 
+The orchestrator judges the video step by its deliverable, not the sub-agent's exit code: if the headless session ends without `video.mp4`, it relaunches the agent with a resume note, up to three times, then continues.
+
 ## One progress log
 
 Everything that happens, from every step and both agents, lands in **`logs/progress.log`** as one line each:

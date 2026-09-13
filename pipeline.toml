@@ -36,7 +36,7 @@ pick = "top"              # which repeatable idea to hand off by default: "top" 
 workflow = "faceless-explainer"   # motion-graphics = short unnarrated kinetic piece (<=10s, fast) · faceless-explainer = 30-90s narrated explainer (slower)
 destination = "shorts"    # shorts | tiktok | reels | youtube  (shorts/tiktok/reels = 9:16)
 aspect = "1080x1920"
-length = "30s"
+length = "21s"
 language = "en"
 angle = "auto"            # auto (from the title shape) | listicle | how-to | concept | narrative  (used by faceless-explainer)
 voice = "elevenlabs"      # none | elevenlabs (needs ELEVENLABS_API_KEY in the agent's .env) | default (HeyGen/Kokoro per the media engine)

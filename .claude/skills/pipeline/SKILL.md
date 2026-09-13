@@ -36,7 +36,7 @@ Airtable "Repeatable Ideas" table       one row per idea, "Run ID" column
 | 6 | `uv run python -m integrations.gcs.upload [--dry-run]` | GCS API | video in `gs://<bucket>/videos/<run_id>/`, `deliverables.json`, `gcs_upload.md` |
 | 7 | `uv run python -m integrations.metricool.schedule [--dry-run]` | Metricool API | draft/scheduled post, `metricool_schedule.md` |
 | 8 | `uv run python -m analysis.evaluate` | none | `evaluation.md` — exit 1 on any FAIL |
-| all | `uv run python -m analysis.pipeline [--from A --to B] [--skip video] [--dry-run]` | sum of the above | stops at the first failing step |
+| all | `uv run python -m analysis.pipeline [--from A --to B] [--skip video] [--dry-run]` | sum of the above | stops at the first failing step; the video step is judged by the MP4 and auto-resumes the sub-agent up to 3 times |
 
 ## Step 5: the video sub-agent
 
