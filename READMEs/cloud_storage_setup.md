@@ -18,5 +18,5 @@ Notes of how I got Google Cloud Storage integration working
 ##
 
 - Download a JSON key associated with the Service Account
-
-## 
+- Add JSON file to .secrets directory
+- Reference JSON in the `GOOGLE_APPLICATION_CREDENTIALS` environment variable
