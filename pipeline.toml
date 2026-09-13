@@ -43,3 +43,33 @@ voice = "elevenlabs"      # none | elevenlabs (needs ELEVENLABS_API_KEY in the a
 voice_id = "SAz9YHcvj6GT2YYXdXww"   # ElevenLabs voice: River (relaxed, neutral, informative). "" = provider default
 music = "elevenlabs"      # none | elevenlabs (generated bed via the agent's scripts/elevenlabs_music.sh) | default (media engine)
 music_mood = "auto"       # auto (from the idea) or a mood prompt, e.g. "warm lo-fi, curious, light percussion"
+
+[gcs]                     # step 6 · uv run python -m integrations.gcs.upload
+bucket = "social-media-content-for-distribution"   # existing bucket; must allow public reads (allUsers: objectViewer) for Metricool to fetch the file
+prefix = "videos"                # object path: <prefix>/<run_id>/<brief_id>.mp4
+location = "US"
+url_mode = "public"       # public = bucket allows anonymous reads, plain https URL (what Metricool needs) · signed = 7-day signed URL (needs a service-account key)
+signed_url_days = 7
+project = ""              # "" = GOOGLE_CLOUD_PROJECT from .env / gcloud default
+
+[metricool]               # step 7 · uv run python -m integrations.metricool.schedule
+networks = ["instagram"]  # any of: instagram, tiktok, youtube, facebook, linkedin, twitter, threads, bluesky (must be connected to the brand)
+timezone = "America/New_York"
+days_ahead = 1            # schedule for this many days from now …
+time = "10:00"            # … at this local time
+draft = true              # true = lands on the calendar as a draft for a human to approve (recommended); false = a real scheduled post
+auto_publish = true       # when not a draft: publish via API at the time (true) or push a reminder to the mobile app (false)
+declare_ai = true         # mark the post as AI-generated where the network supports it
+instagram_type = "REEL"
+youtube_privacy = "private"
+tiktok_privacy = "SELF_ONLY"
+tags = ["ai", "claude", "automation"]
+caption_template = """{title}
+
+A proven idea: {score} other channels made this topic work. Our take, in under a minute.
+
+#ai #automation #claude"""
+
+[evaluate]                # step 8 · uv run python -m analysis.evaluate
+duration_tolerance = 0.25 # rendered length may differ from [video] length by this fraction
+require_audio = true      # fail if voice was requested but the MP4 has no audio stream

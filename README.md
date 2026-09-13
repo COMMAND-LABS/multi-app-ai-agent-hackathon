@@ -1,6 +1,6 @@
 # multi-app-ai-agent
 
-Claude Code acts as the agent driving three platform integrations: **YouTube** (done), **Airtable** (done), **Metricool** (next). Each integration is a small Python client plus a CLI, a Claude skill under `.claude/skills/`, and pulled data lands in `data/`.
+Claude Code acts as the agent driving five integrations: **YouTube**, **Airtable**, **Google Cloud Storage**, **Metricool**, and a **HyperFrames video sub-agent**. Each integration is a small Python client plus a CLI, a Claude skill under `.claude/skills/`, and pulled data lands in `data/`.
 
 ## Setup
 
@@ -59,8 +59,38 @@ uv run python -m analysis.repeatability
 # 4. push repeatable ideas to Airtable                -> reports/<run_id>/airtable_sync.md
 uv run python -m integrations.airtable.push --dry-run   # then without --dry-run
 # 5. hand the top idea to the video sub-agent          -> ../idea-video-agent/briefs/<run_id>__<id>.md
-uv run python -m analysis.handoff            # add --launch to build the short headlessly
+uv run python -m analysis.handoff --launch   # --launch builds the short headlessly (minutes)
+# 6. upload the video to Google Cloud Storage           -> deliverables.json (public URL)
+uv run python -m integrations.gcs.upload
+# 7. put it on the Metricool content calendar (draft)   -> metricool_schedule.md
+uv run python -m integrations.metricool.schedule
+# 8. evaluate the whole run                             -> evaluation.md (PASS/WARN/FAIL)
+uv run python -m analysis.evaluate
+
+# or all of it in one go (stops at the first failing step):
+uv run python -m analysis.pipeline [--skip video] [--dry-run]
 ```
+
+## One progress log
+
+Everything that happens, from every step and both agents, lands in **`logs/progress.log`** as one line each:
+
+```
+2026-09-13 15:31:02  2026-09-13_13-40-22_a9aa5ed2  pipeline     repeatability  10 repeatable of 16 checked (~1712 quota units) → reports/…/repeatability.md
+2026-09-13 15:36:58  2026-09-13_13-40-22_a9aa5ed2  video-agent  step           init HyperFrames project
+```
+
+```bash
+uv run python -m analysis.progress -f        # follow it live
+uv run python -m analysis.progress --run-id 2026-09-13_13-40-22_a9aa5ed2
+```
+
+## Reliability and evaluation
+
+- `uv run python -m analysis.evaluate` checks every artifact of a run against what the pipeline promised and writes `reports/<run_id>/evaluation.md` with a PASS/WARN/FAIL table. It exits non-zero on any FAIL, so it works as a gate in the orchestrator.
+- `uv run pytest` runs the offline unit tests (outlier math, topic similarity, brief scrubbing, Airtable and Metricool payload shapes, secret redaction in the logs).
+- Every external write has a `--dry-run` that produces the same receipt without touching the service.
+- Re-running any step is safe: Airtable upserts, GCS overwrites the same object, Metricool records the post id so you can see duplicates before they happen.
 
 ## The video sub-agent
 
@@ -79,7 +109,7 @@ first headless run, or its permission allowlist is ignored.
 
 Change a rule by editing [pipeline.toml](pipeline.toml); override it for one run with the matching flag (e.g. `--threshold 4`). Full details in [.claude/skills/pipeline/SKILL.md](.claude/skills/pipeline/SKILL.md).
 
-## Tool-call log
+## Tool-call logs (per session, detailed)
 
 A Claude Code hook logs every tool call the agent makes. Each session (run) gets its own timestamped file, e.g. `logs/2026-09-13_13-40-22_a9aa5ed2.log`. Follow the current session with:
 

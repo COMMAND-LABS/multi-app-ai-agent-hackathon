@@ -18,6 +18,64 @@ from datetime import datetime, timezone
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG_DIR = os.path.join(ROOT, "logs")
 SESSION_DIR = os.path.join(LOG_DIR, ".sessions")   # session_id -> log file stem
+
+# The ONE shared progress log. The main project owns logs/progress.log; the video agent's launcher
+# points PIPELINE_PROGRESS_LOG at that same file so both agents' milestones land in one place.
+PROGRESS_LOG = os.environ.get("PIPELINE_PROGRESS_LOG") or os.path.join(ROOT, "logs", "progress.log")
+ACTOR = os.environ.get("PIPELINE_ACTOR") or ("video-agent" if "video-agent" in ROOT else "main-agent")
+def _run_id():
+    if os.environ.get("PIPELINE_RUN_ID"):
+        return os.environ["PIPELINE_RUN_ID"]
+    latest = os.path.join(LOG_DIR, "latest.log")   # the main project's current session = the run id
+    try:
+        return os.path.splitext(os.path.basename(os.readlink(latest)))[0] if os.path.islink(latest) else "-"
+    except OSError:
+        return "-"
+
+
+RUN_ID = _run_id()
+# (regex on the Bash command, label) — only these become progress lines; everything else stays in the session log
+MILESTONES = [
+    (re.compile(r"hyperframes init"), "init HyperFrames project"),
+    (re.compile(r"hyperframes skills update (\S+)"), "install workflow {1}"),
+    (re.compile(r"audio\.mjs (generate|sync-durations|fetch-sfx)"), "audio: {1}"),
+    (re.compile(r"elevenlabs_music"), "music: ElevenLabs bed"),
+    (re.compile(r"hyperframes (lint|check|snapshot)"), "verify: {1}"),
+    (re.compile(r"hyperframes render"), "render"),
+    (re.compile(r"cp .*video\.mp4"), "deliver video.mp4"),
+]
+
+
+def progress(step, message):
+    try:
+        os.makedirs(os.path.dirname(PROGRESS_LOG), exist_ok=True)
+        with open(PROGRESS_LOG, "a", encoding="utf-8") as f:
+            f.write(redact(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  {RUN_ID:<28}  {ACTOR:<11}  {step:<13}  {message}") + "\n")
+    except OSError:
+        pass
+
+
+def milestone_for(event, tool, args):
+    if event == "SessionStart":
+        return ("session", "started")
+    if event == "Stop":
+        return ("session", "finished (agent stopped)")
+    if event != "PreToolUse":
+        return None
+    if tool == "Skill":
+        return ("skill", f"/{args.get('skill', '')} {args.get('args', '')}".strip())
+    if tool == "Agent":
+        return ("subagent", short(args.get("description", ""), 90))
+    if tool == "Bash" and ACTOR == "video-agent":   # main-agent steps log themselves; only the video agent's shell work is a milestone
+        cmd = args.get("command", "")
+        for rx, label in MILESTONES:
+            m = rx.search(cmd)
+            if m:
+                text = label
+                for i in range(1, (m.re.groups or 0) + 1):
+                    text = text.replace("{%d}" % i, (m.group(i) or "").strip())
+                return ("step", text)
+    return None
 MAX_ARG = 300      # chars per argument value in the readable log
 MAX_LINE = 1200    # chars per readable line
 
@@ -193,6 +251,12 @@ def main():
     stamp = now.strftime("%Y-%m-%d %H:%M:%S")
     session_id = payload.get("session_id") or ""
     session = session_id[:8]
+
+    ms = milestone_for(event, tool, args)
+    if ms:
+        progress(*ms)
+    if event == "Stop":
+        return
 
     os.makedirs(LOG_DIR, exist_ok=True)
     stem = session_stem(session_id, now)

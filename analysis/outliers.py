@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from analysis import config as pipeline_config
+from analysis import progress
 from analysis.run import current_run_id, rel, report_dir
 from integrations.config import settings
 
@@ -243,6 +244,7 @@ def main(argv: list[str] | None = None) -> int:
     write_markdown(out / "outliers.md", run_id, args, results, outliers, now)
     write_csv(out / "outliers.csv", run_id, results)
     print_summary(results, outliers)
+    progress.log("outliers", f"{len(outliers)} outliers ≥{args.threshold}x across {len(results)} channels ({sum(g['n_total'] for r in results for g in r['groups'].values())} videos) → {rel(out / 'outliers.md')}", run_id)
     print(f"\nreport  {rel(out / 'outliers.md')}\ncsv     {rel(out / 'outliers.csv')}\nrun_id  {run_id}")
     return 0
 

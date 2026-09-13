@@ -18,6 +18,8 @@ echo "video agent: $AGENT_DIR  brief: $BRIEF" >&2
 if [ -f "$AGENT_DIR/.env" ]; then set -a; . "$AGENT_DIR/.env"; set +a; fi
 # ElevenLabs caps concurrent requests per plan; the media engine defaults to 4 parallel TTS calls and drops lines that get rejected.
 export HYPERFRAMES_TTS_CONCURRENCY="${HYPERFRAMES_TTS_CONCURRENCY:-1}"
+# One shared progress log for both agents (logs/progress.log in the main project) + the run id from the brief name.
+export PIPELINE_PROGRESS_LOG="$HERE/logs/progress.log" PIPELINE_ACTOR="video-agent" PIPELINE_RUN_ID="${BRIEF%%__*}"
 if ! python3 -c "import json,sys; d=json.load(open('$HOME/.claude.json')); sys.exit(0 if d.get('projects',{}).get('$AGENT_DIR',{}).get('hasTrustDialogAccepted') else 1)" 2>/dev/null; then
   echo "WARNING: $AGENT_DIR is not a trusted workspace yet, so its permission allowlist is ignored and render commands will be denied." >&2
   echo "         Open Claude Code in that folder once and accept the trust dialog, then re-run." >&2

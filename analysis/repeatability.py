@@ -27,6 +27,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from analysis import config as pipeline_config
+from analysis import progress
 from analysis.run import current_run_id, rel, report_dir
 from analysis.text import similarity, topic_query
 from integrations.youtube import YouTubeAPIError, YouTubeClient
@@ -208,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     client = YouTubeClient()
     ideas, quota = [], 0
     print(f"Checking {len(ideas_in)} outlier ideas (about {100 * len(ideas_in)} quota units)...\n")
+    progress.log("repeatability", f"checking {len(ideas_in)} outliers (~{100 * len(ideas_in)} quota units)", args.run_id)
     for n, idea in enumerate(ideas_in, 1):
         try:
             r = scan_idea(client, idea, args, published_after)
@@ -225,6 +227,7 @@ def main(argv: list[str] | None = None) -> int:
     write_markdown(folder / "repeatability.md", args, ideas, published_after, quota)
     write_csvs(folder, ideas)
     rep = [i for i in ideas if i["repeatable"]]
+    progress.log("repeatability", f"{len(rep)} repeatable of {len(ideas)} checked (~{quota} quota units) → {rel(folder / 'repeatability.md')}", args.run_id)
     print(f"\n{len(rep)} repeatable of {len(ideas)} checked.")
     print(f"report  {rel(folder / 'repeatability.md')}\ncsv     {rel(folder / 'repeatability.csv')}\nmatches {rel(folder / 'repeatability_matches.csv')}\nrun_id  {args.run_id}")
     return 0

@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from analysis import config as pipeline_config
+from analysis import progress
 from analysis.run import current_run_id, rel, report_dir
 from integrations.config import PROJECT_ROOT
 
@@ -181,6 +182,8 @@ def main(argv: list[str] | None = None) -> int:
         lines.append(f"| {idea['idea_title'][:60].replace('|', '/')} | {idea['repeatability_score']} | {float(idea['outlier_multiple']):.1f}x | `briefs/{name}` | `output/{name[:-3]}/video.mp4` |")
     lines += ["", "Launch headlessly with:", "", "```bash"] + [f"scripts/run_video_agent.sh {name}" for _, name in written] + ["```"]
     (folder / "handoff.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    for idea, name in written:
+        progress.log("handoff", f"brief {name} ← \"{idea['idea_title'][:60]}\" ({vcfg['workflow']}, {vcfg['length']})", run_id)
     print(f"receipt {rel(folder / 'handoff.md')}")
 
     if args.launch:

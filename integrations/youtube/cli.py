@@ -191,6 +191,8 @@ def cmd_pull_all(args) -> None:
             print(f"  {flat['title']:<35} {len(rows):>4} videos -> {rel(written['latest_csv'])}", file=sys.stderr)
         else:
             print(f"  {flat['title']:<35} {len(rows):>4} videos", file=sys.stderr)
+    from analysis import progress
+    progress.log("pull", f"{len(handles)} channels since {since} ({days} days) → data/youtube/<handle>/videos/latest_since_{since}.csv")
     print(f"\nwindow  since_{since}   (use this with: uv run python -m analysis.outliers --window since_{since})", file=sys.stderr)
 
 

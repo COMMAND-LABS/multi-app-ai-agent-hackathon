@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from analysis import config as pipeline_config
+from analysis import progress
 from analysis.run import current_run_id, rel, report_dir
 from integrations.airtable import AirtableAPIError, AirtableClient
 from integrations.config import settings
@@ -153,11 +154,13 @@ def main(argv: list[str] | None = None) -> int:
             _, created_table = client.ensure_table(args.table, TABLE_FIELDS, "Repeatable YouTube ideas found by the outlier → repeatability pipeline. One row per idea per run.")
             result = client.upsert(args.table, records, MERGE_ON)
         except AirtableAPIError as e:
+            progress.log("airtable", f"FAILED: {e}", run_id)
             print(f"error: {e}", file=sys.stderr)
             if e.status == 403 and "schema" in str(e).lower() or e.status == 403:
                 print("hint: the token may lack schema.bases:write. Create the table manually with the fields in integrations/airtable/push.py, or add the scope.", file=sys.stderr)
             return 1
         base_id = client.base_id
+        progress.log("airtable", f"{len(result['created'])} created, {len(result['updated'])} updated in '{args.table}'" + (" (table created)" if created_table else ""), run_id)
         print(f"\nAirtable: {len(result['created'])} created, {len(result['updated'])} updated" + ("  (table created)" if created_table else ""))
 
     path = write_sync_report(folder, run_id, args.table, base_id, records, result, created_table, args.dry_run)

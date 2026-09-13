@@ -1,11 +1,11 @@
 ---
 name: pipeline
-description: Run the full YouTube idea pipeline (pull channels -> outlier multiples -> repeatability -> Airtable) or any single step, and trace a run by its run_id across logs/, reports/, and Airtable. Use when the user says "run the analysis", "find outliers", "check repeatability", "push to Airtable", or asks what happened in a run.
+description: Run the full YouTube idea pipeline (pull -> outliers -> repeatability -> Airtable -> brief -> video -> GCS -> Metricool -> evaluate) or any single step, and trace a run by its run_id across logs/, reports/, and Airtable. Use when the user says "run the analysis", "find outliers", "check repeatability", "push to Airtable", or asks what happened in a run.
 ---
 
 # Idea pipeline
 
-Four commands, run in order. Every artifact from one session shares a **run_id** equal to the
+Nine steps, one command each (or `uv run python -m analysis.pipeline` for all of them in order). Every artifact from one session shares a **run_id** equal to the
 tool-call log stem, so a run can be traced from the log to the reports to the Airtable rows.
 
 ```
@@ -13,7 +13,12 @@ logs/<run_id>.log                       every tool call (hook)          ┐
 reports/<run_id>/outliers.md + .csv     step 2 output                    │ same run_id
 reports/<run_id>/repeatability.md/.csv  step 3 output (+ _matches.csv)   │
 reports/<run_id>/airtable_sync.md       step 4 receipt with record IDs   │
-reports/<run_id>/handoff.md             step 5 receipt (which brief went where) ┘
+reports/<run_id>/handoff.md             step 5 receipt (which brief went where) │
+reports/<run_id>/gcs_upload.md          step 6 receipt                    │
+reports/<run_id>/metricool_schedule.md  step 7 receipt (+ payload)        │
+reports/<run_id>/deliverables.json      per brief: video path, GCS URL, Metricool post id │
+reports/<run_id>/evaluation.md          step 8: PASS/WARN/FAIL for everything above ┘
+logs/progress.log                       THE progress log: every step + both agents' milestones
 Airtable "Repeatable Ideas" table       one row per idea, "Run ID" column
 ../idea-video-agent/briefs/<run_id>__<video_id>.md   the brief the video sub-agent receives
 ../idea-video-agent/output/<run_id>__<video_id>/     video.mp4 + SUMMARY.md (carries run_id)
@@ -28,6 +33,10 @@ Airtable "Repeatable Ideas" table       one row per idea, "Run ID" column
 | 3 | `uv run python -m analysis.repeatability` | **~100 units per outlier** | `reports/<run_id>/repeatability.{md,csv}`, `repeatability_matches.csv` |
 | 4 | `uv run python -m integrations.airtable.push [--dry-run]` | Airtable API | `reports/<run_id>/airtable_sync.md` + Airtable rows |
 | 5 | `uv run python -m analysis.handoff [--idea ID \| --top N] [--launch]` | none (brief) / a full HyperFrames build if `--launch` | brief in the video agent's `briefs/`, `reports/<run_id>/handoff.md` |
+| 6 | `uv run python -m integrations.gcs.upload [--dry-run]` | GCS API | video in `gs://<bucket>/videos/<run_id>/`, `deliverables.json`, `gcs_upload.md` |
+| 7 | `uv run python -m integrations.metricool.schedule [--dry-run]` | Metricool API | draft/scheduled post, `metricool_schedule.md` |
+| 8 | `uv run python -m analysis.evaluate` | none | `evaluation.md` — exit 1 on any FAIL |
+| all | `uv run python -m analysis.pipeline [--from A --to B] [--skip video] [--dry-run]` | sum of the above | stops at the first failing step |
 
 ## Step 5: the video sub-agent
 
@@ -50,6 +59,21 @@ argument: `scripts/run_video_agent.sh <brief> "" "Resume videos/<name>: audio an
 output file is the usage limit, not a bug.
 The agent folder must be trusted once (open Claude Code there interactively) or its permission
 allowlist is ignored in headless mode. Even a 10s piece takes a few minutes (skill install, init, build, checks, headless-browser render); tell the user before launching. If the workspace is untrusted the launcher passes the allowlist as session flags.
+
+## Progress log and evaluation
+
+- `logs/progress.log` is the single place to see what happened: every step writes a line
+  (`time  run_id  actor  step  message`), the main agent's skill calls land there, and the video
+  sub-agent's milestones (init, audio, music, frame workers, checks, render, deliver, stop) are
+  written into the same file by its hook via `PIPELINE_PROGRESS_LOG`. Show it with
+  `uv run python -m analysis.progress [-n 40] [--run-id X] [-f]`.
+- `analysis.evaluate` is the reliability gate: it re-derives what should exist for a run and checks
+  the artifacts agree (thresholds respected, evidence excludes the idea's own channel, Airtable rows
+  = repeatable ideas, brief has no links/emails, video duration/aspect/audio match the brief's spec,
+  GCS URL answers HEAD with the uploaded size, Metricool post id recorded, progress lines present).
+  Run it after any step; quote its PASS/WARN/FAIL counts in your summary.
+- `uv run pytest` runs the offline test suite (flatteners, outlier math, similarity, brief scrubbing,
+  Airtable/Metricool payloads, logger redaction, progress milestones). Run it after code changes.
 
 ## Configuration
 

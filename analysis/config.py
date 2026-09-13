@@ -25,6 +25,11 @@ DEFAULTS: dict[str, dict] = {
     "video": {"agent_dir": "../idea-video-agent", "pick": "top", "workflow": "faceless-explainer", "destination": "shorts",
               "aspect": "1080x1920", "length": "30s", "language": "en", "angle": "auto",
               "voice": "elevenlabs", "voice_id": "", "music": "elevenlabs", "music_mood": "auto"},
+    "gcs": {"bucket": "", "prefix": "videos", "location": "US", "url_mode": "public", "signed_url_days": 7, "project": ""},
+    "metricool": {"networks": ["instagram"], "timezone": "America/New_York", "days_ahead": 1, "time": "10:00", "draft": True,
+                  "auto_publish": True, "declare_ai": True, "instagram_type": "REEL", "youtube_privacy": "private",
+                  "tiktok_privacy": "SELF_ONLY", "tags": [], "caption_template": "{title}"},
+    "evaluate": {"duration_tolerance": 0.25, "require_audio": True},
 }
 
 
