@@ -29,7 +29,7 @@ Each integration is a small Python client plus a CLI, a Claude skill under `.cla
 
 - Have Claude Code installed (https://code.claude.com/docs/en/quickstart)
 - Clone the project
-- Provide all the environment variable outlined in the `.env.example` file
+- Provide all the environment variables outlined in the `.env.example` file
 - Configure the application via the `pipeline.toml` file
 - Open 2 terminal windows...
   - Run this in the 1st one: `uv run python -m analysis.progress -f`
