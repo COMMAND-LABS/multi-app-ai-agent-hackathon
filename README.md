@@ -1,4 +1,10 @@
-# multi-app-ai-agent
+# Multi-App AI Agent Hackathon
+
+Hosted by Lemma.ai and Comma Capital. Judged by Arga Labs and Userlens.
+
+
+
+# Project De
 
 Claude Code acts as the agent driving five integrations: **YouTube**, **Airtable**, **Google Cloud Storage**, **Metricool**, and a **HyperFrames video sub-agent**. Each integration is a small Python client plus a CLI, a Claude skill under `.claude/skills/`, and pulled data lands in `data/`.
 
