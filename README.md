@@ -1,6 +1,6 @@
 # Multi-App AI Agent Hackathon
 
-Hosted by Lemma.ai and Comma Capital. Judged by Arga Labs and Userlens.
+Hosted by Lemma.ai and Comma Capital. Judged by Arga Labs and Userlens. This is Tad Duval's (tad@cmdlabs.io) submission.
 
 ## Project Overview
 
@@ -25,7 +25,7 @@ Claude Code acts as an agent that automates Social Media Marketing end-2-end wit
 
 Each integration is a small Python client plus a CLI, a Claude skill under `.claude/skills/`, and pulled data lands in `data/`.
 
-## Setup instruction 
+## Setup instructions
 
 - Have Claude Code installed (https://code.claude.com/docs/en/quickstart)
 - Clone the project
