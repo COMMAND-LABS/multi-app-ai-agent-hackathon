@@ -1,0 +1,29 @@
+# pipeline.toml — the knobs for the idea pipeline. No secrets here (those live in .env).
+#
+# Every step reads its defaults from this file. A command-line flag (e.g. --threshold 4)
+# overrides the file for that one run. Each report records the values it actually used.
+# See the effective settings with:  uv run python -m analysis.config
+
+[channels]
+# The channels in the niche. @handles or channel IDs (UC...).
+handles = ["@sabrina_ramonov", "@LiamOttley", "@nateherk", "@GregIsenberg"]
+
+[pull]                    # step 1 · uv run python -m integrations.youtube pull-all
+days = 90                 # how far back to pull videos
+
+[outliers]                # step 2 · uv run python -m analysis.outliers
+threshold = 3.0           # a video is an outlier when its views are at least this many times the channel median
+min_age_days = 7          # videos younger than this are listed but not judged (they haven't matured)
+format = "long"           # which uploads to judge: "long" (over 60s), "short" (60s or under), or "both"
+
+[repeatability]           # step 3 · uv run python -m analysis.repeatability
+days_back = 180           # only look at other videos published within this many days
+per_query = 25            # search results to fetch per idea (every query costs 100 YouTube quota units)
+min_similarity = 0.4      # 0..1 · share of the idea's title keywords that must appear in a candidate's title+description
+min_views = 10000         # a similar video on another channel with at least this many views is a "strong hit"
+min_channels = 3          # an idea is repeatable when strong hits come from at least this many different channels
+limit = 0                 # only check the top N outliers by multiple (0 = check all)
+
+[airtable]                # step 4 · uv run python -m integrations.airtable.push
+table = "Repeatable Ideas"
+push_all = false          # true = also push the ideas that were NOT repeatable (with Repeatable unchecked)
