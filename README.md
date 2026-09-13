@@ -49,6 +49,10 @@ Each integration is a small Python client plus a CLI, a Claude skill under `.cla
 
 https://youtu.be/D6rgPAVBh3w
 
+## Link to "Video Editor Subagent"
+
+https://github.com/COMMAND-LABS/multi-app-ai-agent-hackathon-video-editor-subagent
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
